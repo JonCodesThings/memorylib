@@ -71,6 +71,10 @@ Region* RegionArena_GetRegion(RegionArena* arena, u32 size)
 	assert(arena->size - arena->used > sizeof(Region) + size);
 
 	Region* region = GetFreeRegion(arena->head);
+	while (region->size < size)
+	{
+		region = GetFreeRegion(region);
+	}
 
 	region->flags |= REGION_USED;
 
@@ -87,7 +91,7 @@ void RegionArena_ReturnRegion(RegionArena* arena, Region* region)
 
 	Region* neighborRegion = region->next;
 
-	region->next->flags = REGION_FREE;
+	region->flags = REGION_FREE;
 
 	if (region->next != NULL && !(region->next->flags & REGION_USED))
 		JoinRegions(arena, region, region->next);
@@ -95,9 +99,11 @@ void RegionArena_ReturnRegion(RegionArena* arena, Region* region)
 	neighborRegion = arena->head;
 
 	while (neighborRegion->next != region && neighborRegion->next != NULL)
-		neighborRegion = GetFreeRegion(neighborRegion);
+	{
+		neighborRegion = neighborRegion->next;
+	}
 
-	if (neighborRegion != arena->head)
+	if (neighborRegion != arena->head && neighborRegion != region && (neighborRegion->flags & REGION_FREE))
 		JoinRegions(arena, neighborRegion, region);
 }
 
@@ -132,8 +138,12 @@ static Region* GetFreeRegion(Region* const region)
 	assert(region != NULL);
 
 	Region* n = region;
-	while (n->next != NULL && (n->flags & REGION_USED))
+	while (n->next != NULL)
+	{
 		n = n->next;
+		if (n->flags & REGION_FREE)
+			break;
+	}
 
 	return n;
 }
@@ -169,6 +179,7 @@ static Region* SplitRegion(Region* region, u32 size)
 
 static Region* JoinRegions(RegionArena* arena, Region* a, Region* b)
 {
+	assert(a != b);
 	a->size = a->size + b->size + sizeof(Region);
 	a->next = b->next;
 

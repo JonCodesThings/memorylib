@@ -37,7 +37,7 @@ int main()
 
 	RegionArena_ReturnRegion(&arena, region2);
 
-	if (GetActiveRegionCount(&arena) != 3)
+	if (GetActiveRegionCount(&arena) != 4)
 		returnCode = 6;
 
 	if (region->size != regionTestSize)

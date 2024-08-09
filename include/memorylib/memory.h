@@ -63,7 +63,7 @@ Region *RegionArena_ResizeRegion(RegionArena* arena, Region* region, u32 size);
 
 void RegionArena_ReturnRegion(RegionArena* arena, Region* region);
 
-void RegionArena_Dellocate(RegionArena* arena, u8* alloc);
+void RegionArena_Deallocate(RegionArena* arena, u8* alloc);
 
 void RegionArena_Destroy(RegionArena* arena);
 

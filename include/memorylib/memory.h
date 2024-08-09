@@ -62,11 +62,15 @@ typedef struct RegionArena
 
 void RegionArena_Create(RegionArena* arena, u32 size);
 
+u8* RegionArena_Allocate(RegionArena* arena, u32 size);
+
 Region* RegionArena_GetRegion(RegionArena* arena, u32 size);
 
 Region *RegionArena_ResizeRegion(RegionArena* arena, Region* region, u32 size);
 
 void RegionArena_ReturnRegion(RegionArena* arena, Region* region);
+
+void RegionArena_Dellocate(RegionArena* arena, u8* alloc);
 
 void RegionArena_Destroy(RegionArena* arena);
 

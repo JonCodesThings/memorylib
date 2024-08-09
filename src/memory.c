@@ -48,6 +48,7 @@ Region* GetFinalRegion(Region* const region);
 Region* SplitRegion(Region* region, u32 size);
 Region* JoinRegions(RegionArena* arena, Region* a, Region* b);
 u32 GetRegionDistanceFromHead(Region* const head, Region* current);
+Region* FindRegion(RegionArena* arena, u8* start);
 
 void RegionArena_Create(RegionArena* arena, u32 size)
 {
@@ -65,6 +66,13 @@ void RegionArena_Create(RegionArena* arena, u32 size)
 	arena->head->size = arena->size - sizeof(Region);
 	arena->head->start = arena->memory + sizeof(Region);
 	arena->head->next = NULL;
+}
+
+u8* RegionArena_Allocate(RegionArena* arena, u32 size)
+{
+	Region *region = RegionArena_GetRegion(arena, size);
+	assert(region != NULL && "Region is NULL!");
+	return region->start;
 }
 
 Region* RegionArena_GetRegion(RegionArena* arena, u32 size)
@@ -136,6 +144,12 @@ void RegionArena_ReturnRegion(RegionArena* arena, Region* region)
 		JoinRegions(arena, neighborRegion, region);
 }
 
+void RegionArena_Deallocate(RegionArena* arena, u8* alloc)
+{
+	Region* region = FindRegion(arena, alloc);
+	RegionArena_ReturnRegion(arena, region);
+}
+
 void RegionArena_Destroy(RegionArena* arena)
 {
 	assert(arena->memory != NULL);
@@ -145,9 +159,23 @@ void RegionArena_Destroy(RegionArena* arena)
 	arena->used = 0;
 }
 
+static Region* FindRegion(RegionArena* arena, u8* start)
+{
+	assert(arena != NULL && "Arena is NULL!");
+	Region* n = arena->head;
+
+	while (n->next != NULL)
+	{
+		if (n->start == start)
+			return n;
+	}
+
+	return NULL;
+}
+
 static Region* GetFreeRegion(Region* const region)
 {
-	assert(region != NULL);
+	assert(region != NULL && "Region is NULL!");
 
 	Region* n = region;
 	while (n->next != NULL)
@@ -162,7 +190,7 @@ static Region* GetFreeRegion(Region* const region)
 
 static Region* GetFinalRegion(Region* const region)
 {
-	assert(region != NULL);
+	assert(region != NULL && "Region is NULL!");
 
 	Region* n = region;
 	while (n->next != NULL)
@@ -173,7 +201,7 @@ static Region* GetFinalRegion(Region* const region)
 
 static Region* SplitRegion(Region* region, u32 size)
 {
-	assert(region != NULL);
+	assert(region != NULL && "Region is NULL!");
 
 	u8* leftoverStartsAt = region->start + size;
 

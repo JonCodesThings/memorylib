@@ -168,6 +168,7 @@ static Region* FindRegion(RegionArena* arena, u8* start)
 	{
 		if (n->start == start)
 			return n;
+		n = n->next;
 	}
 
 	return NULL;

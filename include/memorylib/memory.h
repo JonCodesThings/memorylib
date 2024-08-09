@@ -22,10 +22,6 @@ typedef double f64;
 #endif
 #endif
 
-#define SCRATCHPAD_SIZE_BYTES 8 * 1024 * 1024
-
-#define REGION_ARENA_TOTAL_SIZE_BYTES 16 * 1024 * 1024
-
 typedef struct Scratchpad
 {
 	u8* memory;
@@ -40,9 +36,6 @@ void* Scratchpad_Allocate(Scratchpad* sp, u32 size);
 void Scratchpad_Destroy(Scratchpad* sp);
 
 void Scratchpad_Reset(Scratchpad* sp);
-
-extern const u8 REGION_FREE;
-extern const u8 REGION_USED;
 
 typedef struct Region
 {

@@ -14,6 +14,23 @@
 
 #include <stdbool.h>
 
+u32 GetActiveRegionCount(const RegionArena* const arena)
+{
+	assert(arena->head != NULL);
+
+	Region* iter = arena->head;
+	u32 count = 1;
+
+	while (iter->next != NULL)
+	{
+		count++;
+		assert(iter != iter->next);
+		iter = iter->next;
+	}
+
+	return count;
+}
+
 u32 GetTotalSizeOfAllRegions(RegionArena *arena)
 {
 	Region *region = arena->head;

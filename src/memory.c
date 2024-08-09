@@ -17,6 +17,7 @@ void Scratchpad_Create(Scratchpad* scratchpad, u32 size)
 
 void* Scratchpad_Allocate(Scratchpad* sp, u32 size)
 {
+	assert(sp->used + size < sp->size);
 	if (sp->used + size > sp->size)
 		return NULL;
 	void* ret = (void*)&sp->memory[sp->used];
@@ -68,7 +69,7 @@ void RegionArena_Create(RegionArena* arena, u32 size)
 
 Region* RegionArena_GetRegion(RegionArena* arena, u32 size)
 {
-	assert(arena->size - arena->used > sizeof(Region) + size);
+	assert(arena->size - arena->used > sizeof(Region) + size && "Arena running out of storage!");
 
 	Region* region = GetFreeRegion(arena->head);
 	while (region->size < size)
@@ -84,6 +85,34 @@ Region* RegionArena_GetRegion(RegionArena* arena, u32 size)
 
 	return region;
 }
+
+Region* RegionArena_ResizeRegion(RegionArena* arena, Region* region, u32 size)
+{
+	if (region->size == size)
+		return region;
+
+	if (region->next != NULL)
+	{
+		Region *next = region->next;
+		if (next->flags & REGION_FREE)
+		{
+			u32 sizeDiff = size - region->size;
+
+			region->size += sizeDiff;
+
+			memcpy(next + size, next, sizeof(Region));
+			region->next = next + size;
+			return region;
+		}
+	}
+
+	Region* realloc = RegionArena_GetRegion(arena, size);
+	memcpy(realloc->start, region->start, region->size);
+	RegionArena_ReturnRegion(arena, region);
+
+	return realloc;
+}
+
 
 void RegionArena_ReturnRegion(RegionArena* arena, Region* region)
 {
@@ -105,23 +134,6 @@ void RegionArena_ReturnRegion(RegionArena* arena, Region* region)
 
 	if (neighborRegion != arena->head && neighborRegion != region && (neighborRegion->flags & REGION_FREE))
 		JoinRegions(arena, neighborRegion, region);
-}
-
-u32 GetActiveRegionCount(const RegionArena* const arena)
-{
-	assert(arena->head != NULL);
-
-	Region* iter = arena->head;
-	u32 count = 1;
-
-	while (iter->next != NULL)
-	{
-		count++;
-		assert(iter != iter->next);
-		iter = iter->next;
-	}
-
-	return count;
 }
 
 void RegionArena_Destroy(RegionArena* arena)

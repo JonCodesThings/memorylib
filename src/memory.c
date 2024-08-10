@@ -124,6 +124,7 @@ Region* RegionArena_ResizeRegion(RegionArena* arena, Region* region, u32 size)
 
 void RegionArena_ReturnRegion(RegionArena* arena, Region* region)
 {
+	assert(region != NULL && "Region is NULL!");
 	arena->used -= region->size + sizeof(Region);
 
 	Region* neighborRegion = region->next;

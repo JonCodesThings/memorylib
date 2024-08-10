@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="Scratchpad">
+    <DisplayString>{{ used={used}/{size} }}</DisplayString>
+  </Type>
+  <Type Name="RegionArena">
+    <DisplayString>{{ used={used}/{size} }}</DisplayString>
+  </Type>
+  <Type Name="Region">
+    <DisplayString Condition="!flags">Free</DisplayString>
+    <DisplayString Condition="flags">In Use</DisplayString>
+    <Expand>
+        <LinkedListItems>
+            <HeadPointer>this</HeadPointer>
+            <NextPointer>next</NextPointer>
+            <ValueNode>this</ValueNode>
+        </LinkedListItems>
+    </Expand>
+  </Type>
+</AutoVisualizer>

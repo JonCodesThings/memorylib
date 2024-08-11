@@ -10,6 +10,10 @@ add_library(memorylib STATIC src/memory.c)
 
 set_target_properties(memorylib PROPERTIES PREFIX "")
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /natvis:vs/memory.natvis")
+endif()
+
 if (BUILD_TESTS)
 	enable_testing()
 	file(GLOB_RECURSE TESTFILES "test/*.c")

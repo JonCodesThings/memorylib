@@ -5,9 +5,15 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef MEMORYLIB_DEBUG
 #define memorylib_debugf(format, ...) printf(format, __VA_ARGS__)
-#define memorylib_assert(cond, format) puts(format); assert(cond)
-#define memorylib_assertf(cond, format, ...) memorylib_debugf(format, __VA_ARGS__); assert(cond)
+#define memorylib_assert(cond, format) (cond ? puts(format) : NULL) //&& assert(cond)))
+#define memorylib_assertf(cond, format, ...) ((void)memorylib_debugf(format, __VA_ARGS__) && assert(cond))
+#else
+#define memorylib_debugf(format, ...)
+#define memorylib_assert(cond, format)
+#define memorylib_assertf(cond, format, ...)
+#endif
 
 const u8 REGION_FREE = 0;
 const u8 REGION_USED = 1 << 0;

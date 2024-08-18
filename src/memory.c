@@ -35,11 +35,6 @@ void* Scratchpad_Allocate(Scratchpad* sp, u32 size)
 	sp->used += size;
 	return ret;
 }
-//
-//void Scratchpad_Deallocate(Scratchpad* sp, u32 size)
-//{
-//	sp->used -= size;
-//}
 
 void Scratchpad_Reset(Scratchpad* sp)
 {

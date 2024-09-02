@@ -6,9 +6,10 @@
 #include <assert.h>
 
 #ifdef MEMORYLIB_DEBUG
-#define memorylib_debugf(format, ...) printf(format, __VA_ARGS__)
-#define memorylib_assert(cond, format) (cond ? puts(format) : NULL) //&& assert(cond)))
-#define memorylib_assertf(cond, format, ...) ((void)memorylib_debugf(format, __VA_ARGS__) && assert(cond))
+#define memorylib_debug(str) printf("%s\n", str);
+#define memorylib_debugf(format, ...) printf(format, __VA_ARGS__); printf("\n");
+#define memorylib_assert(cond, str) do { if (!(cond)) { memorylib_debug(str); } assert(cond); } while(0);
+#define memorylib_assertf(cond, format, ...) do { if (!(cond)) { memorylib_debugf(format, __VA_ARGS__); } assert(cond); } while(0);
 #else
 #define memorylib_debugf(format, ...)
 #define memorylib_assert(cond, format)
@@ -28,7 +29,8 @@ void Scratchpad_Create(Scratchpad* scratchpad, u32 size)
 
 void* Scratchpad_Allocate(Scratchpad* sp, u32 size)
 {
-	memorylib_assert(sp->used + size < sp->size, "Failed to allocate: out of space in scratchpad!");
+	assert(sp->used + size < sp->size);
+	memorylib_assertf(sp->used + size < sp->size, "Failed to allocate: out of space in scratchpad! %d/%d", sp->used, sp->size);
 	if (sp->used + size > sp->size)
 		return NULL;
 	void* ret = (void*)&sp->memory[sp->used];
@@ -58,7 +60,7 @@ Region* FindRegion(RegionArena* arena, u8* start);
 
 void RegionArena_Create(RegionArena* arena, u32 size)
 {
-	memorylib_debugf("Allocating region arena of size %d\n", size);
+	memorylib_debugf("Allocating region arena of size %d", size);
 	arena->memory = NULL;
 	arena->memory = (u8*)malloc(size);
 	arena->size = 0;
@@ -73,14 +75,14 @@ void RegionArena_Create(RegionArena* arena, u32 size)
 	arena->head->size = arena->size - sizeof(Region);
 	arena->head->start = arena->memory + sizeof(Region);
 	arena->head->next = NULL;
-	memorylib_debugf("Allocator head region initialized with size %d and neighbor %p\n", arena->head->size, arena->head->next);
+	memorylib_debugf("Allocator head region initialized with size %d and neighbor %p", arena->head->size, arena->head->next);
 }
 
 u8* RegionArena_Allocate(RegionArena* arena, u32 size)
 {
 	Region *region = RegionArena_GetRegion(arena, size);
 	memorylib_assert(region != NULL, "Region is NULL!");
-	memorylib_debugf("Allocated new region starting at %p of size %d bytes\n", region->start, region->size);
+	memorylib_debugf("Allocated new region starting at %p of size %d bytes", region->start, region->size);
 	return region->start;
 }
 
@@ -135,7 +137,7 @@ void RegionArena_ReturnRegion(RegionArena* arena, Region* region)
 {
 	memorylib_assert(region != NULL, "Region is NULL!");
 	arena->used -= region->size + sizeof(Region);
-	memorylib_debugf("Returning region at %p with size %d!\n", region->start, region->size);
+	memorylib_debugf("Returning region at %p with size %d!", region->start, region->size);
 
 	Region* neighborRegion = region->next;
 
@@ -179,13 +181,13 @@ static Region* FindRegion(RegionArena* arena, u8* start)
 	{
 		if (n->start == start)
 		{
-			memorylib_debugf("Found region starting at %p of size %d bytes\n", n->start, n->size);
+			memorylib_debugf("Found region (start:%p size:%d next:%p)", n->start, n->size, n->next);
 			return n;
 		}
 		n = n->next;
 	}
 
-	memorylib_debugf("Failed to find region starting at %p!\n", n->start);
+	memorylib_debugf("Failed to find region starting at %p!", n->start);
 	return NULL;
 }
 
@@ -202,7 +204,7 @@ static Region* GetFreeRegion(Region* const region)
 		break;
 	}
 
-	memorylib_debugf("Found free region starting at %p with current size %d bytes\n", n->start, n->size);
+	memorylib_debugf("Found free region (start:%p size:%d next:%p)", n->start, n->size, n->next);
 	return n;
 }
 
@@ -220,10 +222,10 @@ static Region* GetFinalRegion(Region* const region)
 static Region* SplitRegion(Region* region, u32 size)
 {
 	memorylib_assert(region != NULL, "Region is NULL!");
-	memorylib_debugf("Splitting region starting at %p with size %d\n", region->start, region->size);
+	memorylib_debugf("Splitting region (start:%p size:%d next:%p)", region->start, region->size, region->next);
 
 	u32 leftoverSize = region->size - size;
-	memorylib_debugf("Remainder left over from allocation %d\n", leftoverSize);
+	memorylib_debugf("Remainder left over from allocation %d", leftoverSize);
 
 	if (leftoverSize > sizeof(Region))
 	{
@@ -236,11 +238,11 @@ static Region* SplitRegion(Region* region, u32 size)
 
 		region->next = leftover;
 		region->size = size;
-		memorylib_debugf("Region starting at %p with new size %d split to form new region %p of size %d\n", region->start, region->size, leftover->start, leftover->size);
+		memorylib_debugf("Region (start:%p size:%d next:%p) split to form new neighbor region (start:%p size:%d next:%p)", region->start, region->size, region->next, leftover->start, leftover->size, leftover->next);
 	}
 	else
 	{
-		memorylib_debugf("Region %p left unsplit for this allocation, retaining size %d: not enough room for region header in remainder memory\n", region->start, region->size);
+		memorylib_debugf("Region (start:%p size:%d next:%p) left unsplit: not enough room for region header in remainder memory", region->start, region->size, region->next);
 	}
 
 	return region;
@@ -249,7 +251,7 @@ static Region* SplitRegion(Region* region, u32 size)
 static Region* JoinRegions(RegionArena* arena, Region* a, Region* b)
 {
 	memorylib_assert(a != b, "Region pointers were the same!");
-	memorylib_debugf("Merging regions starting at %p and %p to form new region of size %d with neighbor %p\n", a->start, b->start, a->size + b->size, b->next);
+	memorylib_debugf("Merging regions (start:%p size:%d next:%p) and (start:%p size:%d next:%p) to form new region of size %d (removing redundant header of size:%d) with neighbor %p", a->start, a->size, a->next, b->start, b->size, b->next, a->size + b->size + (u32)sizeof(Region), (u32)sizeof(Region), b->next);
 	a->size = a->size + b->size + sizeof(Region);
 	a->next = b->next;
 

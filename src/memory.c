@@ -43,11 +43,11 @@ void Scratchpad_Destroy(Scratchpad* sp)
 	sp->size = 0;
 }
 
-Region* GetFreeRegion(Region* const region);
-Region* GetFinalRegion(Region* const region);
-Region* SplitRegion(Region* region, u32 size);
-Region* JoinRegions(RegionArena* arena, Region* a, Region* b);
-u32 GetRegionDistanceFromHead(Region* const head, Region* current);
+static Region* GetFreeRegion(Region* const region);
+static Region* GetFinalRegion(Region* const region);
+static Region* SplitRegion(Region* region, u32 size);
+static Region* JoinRegions(RegionArena* arena, Region* a, Region* b);
+static u32 GetRegionDistanceFromHead(Region* const head, Region* current);
 
 void RegionArena_Create(RegionArena* arena, u32 size)
 {

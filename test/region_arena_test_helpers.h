@@ -1,11 +1,6 @@
 #ifndef MEMORY_REGION_ARENA_TEST_HELPERS_H
 #define MEMORY_REGION_ARENA_TEST_HELPERS_H
 
-//extern "C"
-//{
-	//#include <include/oslib/platform.h>
-//}
-
 #include <include/memorylib/memory.h>
 
 #include <stdlib.h>
@@ -13,6 +8,10 @@
 #include <assert.h>
 
 #include <stdbool.h>
+
+#define SCRATCHPAD_SIZE_BYTES 8 * 1024 * 1024
+
+#define REGION_ARENA_TOTAL_SIZE_BYTES 16 * 1024 * 1024
 
 u32 GetActiveRegionCount(const RegionArena* const arena)
 {

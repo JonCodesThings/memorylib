@@ -7,10 +7,13 @@
 
 #ifdef MEMORYLIB_DEBUG
 #define memorylib_debug(str) printf("%s\n", str);
+#define memorylib_debug_only(...) __VA_ARGS__
 #define memorylib_debugf(format, ...) printf(format, __VA_ARGS__); printf("\n");
 #define memorylib_assert(cond, str) do { if (!(cond)) { memorylib_debug(str); } assert(cond); } while(0);
 #define memorylib_assertf(cond, format, ...) do { if (!(cond)) { memorylib_debugf(format, __VA_ARGS__); } assert(cond); } while(0);
 #else
+#define memorylib_debug(str)
+#define memorylib_debug_only(...)
 #define memorylib_debugf(format, ...)
 #define memorylib_assert(cond, format)
 #define memorylib_assertf(cond, format, ...)
@@ -52,10 +55,10 @@ void Scratchpad_Destroy(Scratchpad* sp)
 }
 
 static Region* GetFreeRegion(Region* const region);
-static Region* GetFinalRegion(Region* const region);
+memorylib_debug_only(static Region* GetFinalRegion(Region* const region);)
 static Region* SplitRegion(Region* region, u32 size);
 static Region* JoinRegions(RegionArena* arena, Region* a, Region* b);
-static u32 GetRegionDistanceFromHead(Region* const head, Region* current);
+memorylib_debug_only(static u32 GetRegionDistanceFromHead(Region* const head, Region* current);)
 Region* FindRegion(RegionArena* arena, u8* start);
 
 void RegionArena_Create(RegionArena* arena, u32 size)
@@ -99,6 +102,10 @@ Region* RegionArena_GetRegion(RegionArena* arena, u32 size)
 	region->flags |= REGION_USED;
 
 	Region* next = SplitRegion(region, size);
+	if (next == NULL)
+	{
+		return NULL;
+	}
 
 	arena->used += sizeof(Region) + region->size;
 
@@ -172,7 +179,7 @@ void RegionArena_Destroy(RegionArena* arena)
 	arena->used = 0;
 }
 
-static Region* FindRegion(RegionArena* arena, u8* start)
+Region* FindRegion(RegionArena* arena, u8* start)
 {
 	memorylib_assert(arena != NULL, "Arena is NULL!");
 	Region* n = arena->head;
@@ -208,6 +215,7 @@ static Region* GetFreeRegion(Region* const region)
 	return n;
 }
 
+#ifdef MEMORYLIB_DEBUG
 static Region* GetFinalRegion(Region* const region)
 {
 	memorylib_assert(region != NULL, "Region is NULL!");
@@ -218,6 +226,7 @@ static Region* GetFinalRegion(Region* const region)
 
 	return n;
 }
+#endif
 
 static Region* SplitRegion(Region* region, u32 size)
 {
@@ -258,6 +267,7 @@ static Region* JoinRegions(RegionArena* arena, Region* a, Region* b)
 	return a;
 }
 
+#ifdef MEMORYLIB_DEBUG
 static u32 GetRegionDistanceFromHead(Region* const head, Region* current)
 {
 	u32 ret = 0;
@@ -266,3 +276,4 @@ static u32 GetRegionDistanceFromHead(Region* const head, Region* current)
 
 	return ret;
 }
+#endif
